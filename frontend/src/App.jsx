@@ -6,7 +6,8 @@ import {
   getSigningClient,
   postMessage,
   queryLastMessage,
-  queryMessageCount
+  queryMessageCount,
+  suggestChain
 } from './cosmwasm';
 
 export default function App() {
@@ -38,6 +39,16 @@ export default function App() {
     }
   }
 
+  async function onSuggestChain() {
+    try {
+      setStatus({ kind: 'pending', text: 'Requesting Keplr to add the local chain…' });
+      await suggestChain();
+      setStatus({ kind: 'ok', text: 'Chain added in Keplr. Now click “Connect Wallet”.' });
+    } catch (e) {
+      setStatus({ kind: 'error', text: e?.message ?? String(e) });
+    }
+  }
+
   async function onPost() {
     try {
       if (!signingClient || !address) return;
@@ -58,9 +69,14 @@ export default function App() {
       <div className="card">
         <div className="title">
           <h1>{cfg.appName}</h1>
-          <button className="btn primary" onClick={onConnect} disabled={connected}>
-            {connected ? 'Wallet Connected' : 'Connect Wallet'}
-          </button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button className="btn" onClick={onSuggestChain}>
+              Add Local Chain to Keplr
+            </button>
+            <button className="btn primary" onClick={onConnect} disabled={connected}>
+              {connected ? 'Wallet Connected' : 'Connect Wallet'}
+            </button>
+          </div>
         </div>
 
         <div className="row">

@@ -37,3 +37,30 @@ Notes:
 
 - Keplr approvals happen in your browser (cannot be automated from VS Code).
 - If Keplr doesn’t know your local chain yet, you may need to add/suggest it.
+
+## 4) Keplr: add chain + fund address
+
+### Add the local chain
+
+If Keplr won’t allow manual custom chain add, use the frontend button:
+
+- **Add Local Chain to Keplr**
+
+It calls `window.keplr.experimentalSuggestChain(...)`.
+
+### Fund your Keplr address (local faucet)
+
+On a fresh local chain, your Keplr address may not exist on-chain until it receives tokens.
+If you see an error about “account does not exist on chain”, fund it:
+
+```bash
+docker exec -i blockboard-wasmd wasmd tx bank send validator <YOUR_KEPLR_ADDRESS> 2000000stake \
+	--chain-id localwasm --node http://127.0.0.1:26657 --keyring-backend test \
+	--fees 5000stake -y --broadcast-mode sync
+```
+
+Or:
+
+```powershell
+powershell -File scripts/fund-keplr.ps1 -Address <YOUR_KEPLR_ADDRESS>
+```

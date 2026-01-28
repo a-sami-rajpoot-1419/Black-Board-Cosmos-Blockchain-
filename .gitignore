@@ -16,7 +16,11 @@ frontend/.vite/
 # Rust / Cargo
 target/
 contracts/target/
+contracts/artifacts/
 **/*.wasm
+
+# Local chain data (generated)
+local-chain/data/
 
 # Logs
 *.log
