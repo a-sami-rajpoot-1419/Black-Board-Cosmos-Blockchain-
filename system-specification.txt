@@ -1,0 +1,337 @@
+# BlockBoard Cosmos
+
+A Cosmos-SDK + CosmWasm implementation of the **BlockBoard** on‑chain message board. This project mirrors the EVM version in **functionality, UX intent, and learning goals**, while teaching Cosmos-native concepts: Tendermint consensus, validators, gas, WASM contracts, and Keplr wallet integration.
+
+---
+
+## 1. Purpose & Learning Goals
+
+**Functional parity with EVM BlockBoard**
+
+* Post a message (≤ 140 characters)
+* Read last message
+* Read message count
+
+**What you will learn (Cosmos-specific)**
+
+* Cosmos SDK architecture
+* Tendermint (PoS + BFT) block production
+* CosmWasm smart contracts (Rust → WASM)
+* Keplr wallet + signing flow
+* Gas & fees in Cosmos
+* Local chain vs public testnet workflow
+
+This is a **100% free, local-first** learning project.
+
+---
+
+## 2. System Overview (High-Level)
+
+```
+User (Browser)
+   ↓ Keplr Wallet (sign tx)
+Frontend (React)
+   ↓ CosmJS
+Cosmos Node (Local)
+   ↓
+CosmWasm Smart Contract
+```
+
+There is **no backend server**. The blockchain itself is the backend.
+
+---
+
+## 3. Repository Structure (Standard Cosmos Layout)
+
+```
+blockboard-cosmos/
+│
+├── contracts/                 # CosmWasm smart contract
+│   ├── Cargo.toml
+│   ├── src/
+│   │   ├── lib.rs              # Contract entry points
+│   │   ├── msg.rs              # Execute / Query messages
+│   │   ├── state.rs            # On-chain state
+│   │   └── error.rs            # Custom errors
+│   ├── schema/                 # JSON schemas (auto-generated)
+│   └── tests/                  # Rust unit tests
+│
+├── frontend/                  # React UI
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── cosmwasm.js         # Chain + contract helpers
+│   │   ├── config.js           # Contract address, chain info
+│   │   └── styles.css
+│   ├── index.html
+│   └── package.json
+│
+├── local-chain/               # Local Cosmos chain config
+│   └── README.md
+│
+├── docs/
+│   ├── SETUP_LOCAL.md
+│   ├── TESTING.md
+│   └── ARCHITECTURE.md
+│
+└── README.md
+```
+
+This structure is **industry-standard** for CosmWasm projects.
+
+---
+
+## 4. Smart Contract Specification (CosmWasm)
+
+### 4.1 Contract State
+
+```rust
+pub struct State {
+    pub last_message: String,
+    pub message_count: u64,
+}
+```
+
+* Stored on-chain
+* Persists across blocks and restarts
+
+---
+
+### 4.2 Execute Messages
+
+```rust
+PostMessage { message: String }
+```
+
+**Rules**
+
+* Message length ≤ 140 characters
+* Empty messages rejected
+
+**Behavior**
+
+* Update `last_message`
+* Increment `message_count`
+* Emit event `message_posted`
+
+---
+
+### 4.3 Query Messages
+
+```rust
+GetLastMessage {}
+GetMessageCount {}
+```
+
+Used by frontend to read chain state.
+
+---
+
+### 4.4 Contract Entry Points
+
+| Function    | Purpose                |
+| ----------- | ---------------------- |
+| instantiate | Initialize state       |
+| execute     | Handle transactions    |
+| query       | Read-only state access |
+
+---
+
+## 5. Frontend Specification (React)
+
+### 5.1 Wallet Integration
+
+* Wallet: **Keplr** (free browser extension)
+* Connection via `window.keplr`
+* Chain: Local Cosmos chain or public testnet
+
+---
+
+### 5.2 UI Layout (Matches EVM Version)
+
+```
+┌──────────────────────────┐
+│ BlockBoard Cosmos        │
+│ [ Connect Wallet ]       │
+│                          │
+│ Last Message: "..."     │
+│ Message Count: 5         │
+│                          │
+│ [ Text Input Box ]       │
+│ [ Post Message ]         │
+│                          │
+│ Status: Tx Pending...    │
+└──────────────────────────┘
+```
+
+**UI Rules**
+
+* Button disabled until wallet connected
+* Clear status text (idle / pending / success / error)
+* Simple neutral colors (same UX logic as EVM)
+
+---
+
+### 5.3 Frontend Logic Flow
+
+1. User clicks **Connect Wallet**
+2. Keplr approves connection
+3. Frontend creates CosmJS signing client
+4. Reads contract state via query
+5. User submits message
+6. Transaction signed in Keplr
+7. Block confirmation
+8. UI refreshes state
+
+---
+
+## 6. Local Blockchain Setup (Free)
+
+### Required (Outside VS Code)
+
+| Tool         | Why                    |
+| ------------ | ---------------------- |
+| Keplr Wallet | Signing transactions   |
+| Docker       | Run local Cosmos chain |
+| Rust         | Build WASM contract    |
+| Node.js      | Frontend tooling       |
+
+---
+
+### Local Chain Choice
+
+**Option A (Recommended)**
+
+* Use `wasmd` Docker image (CosmWasm-enabled chain)
+* Single-validator
+* Free and fast
+
+**Option B (Advanced)**
+
+* Ignite CLI
+* Custom Cosmos SDK chain
+
+This project assumes **Option A**.
+
+---
+
+## 7. Build & Run Instructions (Correct Order)
+
+### Step 1 – Start Local Chain
+
+```bash
+docker run -p 26657:26657 -p 1317:1317 cosmwasm/wasmd
+```
+
+---
+
+### Step 2 – Compile Contract
+
+```bash
+cd contracts
+cargo wasm
+```
+
+---
+
+### Step 3 – Upload & Instantiate Contract
+
+```bash
+wasmd tx wasm store blockboard.wasm
+wasmd tx wasm instantiate ...
+```
+
+Contract address is saved to `frontend/config.js`.
+
+---
+
+### Step 4 – Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 8. Testing Strategy
+
+### 8.1 Smart Contract Tests
+
+* Written in Rust
+* Validate:
+
+  * initial state
+  * valid message post
+  * rejection of long messages
+
+---
+
+### 8.2 Manual UI Tests
+
+| Test           | Expected       |
+| -------------- | -------------- |
+| Wallet connect | Keplr popup    |
+| Post valid msg | State updates  |
+| Post long msg  | Tx fails       |
+| Refresh page   | State persists |
+
+---
+
+## 9. Comparison to EVM Version
+
+| Feature    | EVM       | Cosmos         |
+| ---------- | --------- | -------------- |
+| Language   | Solidity  | Rust           |
+| VM         | EVM       | WASM           |
+| Wallet     | MetaMask  | Keplr          |
+| Consensus  | PoS / PoW | Tendermint PoS |
+| Client lib | ethers.js | cosmjs         |
+
+**Mental Model**
+
+> EVM = global computer
+> Cosmos = sovereign app-chains
+
+---
+
+## 10. What Is Manual / Outside VS Code
+
+* Install Keplr browser extension
+* Docker (for local chain)
+* Allow Keplr to connect to local chain
+
+Everything else is done **inside VS Code**.
+
+---
+
+## 11. Is This a Standard Cosmos Repo?
+
+✅ YES
+
+If you build future Cosmos apps:
+
+* contracts/ → CosmWasm
+* frontend/ → UI
+* local-chain/ → infra
+
+Same flow every time.
+
+---
+
+## 12. Completion Criteria
+
+The app is complete when:
+
+* Message persists across refresh
+* Gas is charged
+* UI reacts to chain state
+* No backend server exists
+
+---
+
+If you want, next we can:
+
+* Map EVM concepts → Cosmos equivalents line-by-line
+* Write the **actual Rust contract code**
+* Walk transaction lifecycle (Keplr → Tendermint → state)
