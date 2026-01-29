@@ -6,8 +6,11 @@ This repo assumes a **local CosmWasm-enabled chain** and a browser wallet (Keplr
 
 - Docker Desktop running
 - Keplr browser extension installed
-- Rust toolchain installed (for building contracts)
 - Node.js installed (for frontend)
+
+Optional:
+
+- Rust toolchain (only needed if you want to build the contract natively instead of using Docker)
 
 ## 1) Create frontend env
 
@@ -28,9 +31,9 @@ See `local-chain/README.md`.
 
 High-level flow:
 
-1. Build WASM from `contracts/`
-2. Upload (`store`) the WASM to the chain
-3. Instantiate the contract
+1. Build WASM from `contracts/` (recommended: `cosmwasm/rust-optimizer`)
+2. Upload (`store`) the WASM to the chain (this returns a `code_id`)
+3. Instantiate the `code_id` (this returns the contract address)
 4. Copy the contract address into `frontend/.env`
 
 Notes:
@@ -55,12 +58,28 @@ If you see an error about “account does not exist on chain”, fund it:
 
 ```bash
 docker exec -i blockboard-wasmd wasmd tx bank send validator <YOUR_KEPLR_ADDRESS> 2000000stake \
-	--chain-id localwasm --node http://127.0.0.1:26657 --keyring-backend test \
-	--fees 5000stake -y --broadcast-mode sync
+  --chain-id localwasm --node http://127.0.0.1:26657 --keyring-backend test \
+  --fees 5000stake -y --broadcast-mode sync
 ```
 
 Or:
 
 ```powershell
 powershell -File scripts/fund-keplr.ps1 -Address <YOUR_KEPLR_ADDRESS>
+```
+
+## 5) Run the frontend
+
+From `frontend/`:
+
+```bash
+npm install
+npm run dev
+```
+
+Windows tip: if PowerShell blocks `npm.ps1`, use `npm.cmd` instead:
+
+```powershell
+npm.cmd install
+npm.cmd run dev
 ```
