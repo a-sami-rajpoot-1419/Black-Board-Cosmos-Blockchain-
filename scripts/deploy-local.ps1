@@ -19,7 +19,13 @@ function Require-Command([string]$Name) {
   if (-not $cmd) { throw "Missing required command: $Name" }
 }
 
-Require-Command docker
+function Get-CommandOrThrow([string]$Name) {
+  $cmd = Get-Command $Name -ErrorAction SilentlyContinue
+  if (-not $cmd) { throw "Missing required command: $Name" }
+  return $cmd
+}
+
+Get-CommandOrThrow docker | Out-Null
 
 $contractsDir = Join-Path $WorkspaceRoot 'contracts'
 $artifactsDir = Join-Path $contractsDir 'artifacts'
