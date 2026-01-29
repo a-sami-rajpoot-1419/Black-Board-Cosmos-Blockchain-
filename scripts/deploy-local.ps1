@@ -14,11 +14,6 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-function Require-Command([string]$Name) {
-  $cmd = Get-Command $Name -ErrorAction SilentlyContinue
-  if (-not $cmd) { throw "Missing required command: $Name" }
-}
-
 function Get-CommandOrThrow([string]$Name) {
   $cmd = Get-Command $Name -ErrorAction SilentlyContinue
   if (-not $cmd) { throw "Missing required command: $Name" }
