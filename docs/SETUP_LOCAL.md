@@ -8,6 +8,10 @@ This repo assumes a **local CosmWasm-enabled chain** and a browser wallet (Keplr
 - Keplr browser extension installed
 - Node.js installed (for frontend)
 
+Recommended:
+
+- Node.js **20 LTS** (most stable for Vite dev server on Windows). If you use a very new Node version and see `[vite] server connection lost` / `ERR_CONNECTION_REFUSED`, switch to Node 20.
+
 Optional:
 
 - Rust toolchain (only needed if you want to build the contract natively instead of using Docker)

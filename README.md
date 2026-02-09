@@ -6,7 +6,7 @@ You get:
 
 - A local CosmWasm-enabled chain (`wasmd`) in Docker
 - A CosmWasm contract that stores `last_message` and `message_count`
-- A React (Vite) frontend that connects via Keplr + CosmJS
+- A React (Vite) frontend that connects via **Keplr or MetaMask (Leap Cosmos Snap)** + CosmJS
 
 ## Repo layout
 
@@ -73,8 +73,19 @@ Open:
 
 ### Add the local chain
 
-If Keplr won’t let you manually add a custom chain, the frontend provides an **“Add Local Chain to Keplr”** button.
-It calls `window.keplr.experimentalSuggestChain(...)` (with fallback to `keplr.suggestChain`).
+The frontend supports both Keplr and MetaMask (Leap Snap).
+
+- Select **Keplr** in the wallet dropdown
+- Click **Connect**
+
+If Keplr needs the chain added/configured, it will prompt you during the connection flow.
+
+## MetaMask (Snap) notes
+
+MetaMask works via the **Leap Cosmos Snap** (Cosmos tx signing inside MetaMask).
+
+- Setup/behavior: `docs/WALLET_METAMASK.md`
+- The app includes a **Download Logs** button that exports safe JSON logs for debugging wallet + tx behavior.
 
 ### “Account does not exist on chain”
 

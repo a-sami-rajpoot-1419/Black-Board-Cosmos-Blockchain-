@@ -18,6 +18,20 @@ Manual checks:
 - Rejects empty / >140 chars (client-side)
 - Refresh page keeps state (on-chain)
 
+### MetaMask (Leap Cosmos Snap)
+
+- Click **Connect Wallet** → choose MetaMask (Snap)
+- Approve snap install/enable (first time)
+- Confirm the connected address is `wasm1...` (not `cosmos1...`)
+- Fund that address (see faucet section below)
+- Post a message → MetaMask popup appears → approve
+- Verify the UI refresh shows updated last message + count
+- Click **Download Logs** and confirm it contains:
+	- wallet name (MetaMask Snap)
+	- the bech32 address (`wasm1...`)
+	- a derived `0x...` display address
+	- a tx hash / broadcast result for the execute
+
 ## Keplr "account does not exist" (local chain)
 
 If Keplr connects but you see an error like:

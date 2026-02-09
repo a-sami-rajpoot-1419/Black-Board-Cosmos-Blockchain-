@@ -42,7 +42,7 @@ The chain is initialized by `start-wasmd.sh` (mounted into the container).
 
 ## “Faucet” (funding a Keplr address)
 
-Local chains don’t have faucets by default. If Keplr errors with “account does not exist on chain”, fund your address from the built-in `validator` key:
+Local chains don’t have faucets by default. If your wallet (Keplr or MetaMask Snap) errors with “account does not exist on chain”, fund your **wallet address** (e.g. `wasm1...`) from the built-in `validator` key:
 
 ```bash
 docker exec -i blockboard-wasmd wasmd tx bank send validator <YOUR_KEPLR_ADDRESS> 2000000stake \
@@ -53,7 +53,7 @@ docker exec -i blockboard-wasmd wasmd tx bank send validator <YOUR_KEPLR_ADDRESS
 PowerShell helper:
 
 ```powershell
-powershell -File ..\scripts\fund-keplr.ps1 -Address <YOUR_KEPLR_ADDRESS>
+powershell -File ..\scripts\fund-keplr.ps1 -Address <YOUR_WALLET_ADDRESS>
 ```
 
 ## Keplr configuration

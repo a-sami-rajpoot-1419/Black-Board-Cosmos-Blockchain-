@@ -1,0 +1,105 @@
+To implement this, we will use the **Leap Cosmos Snap** as the primary driver for MetaMask support. This strategy allows us to keep your `wasmd` chain and Rust contract exactly as they are while "teaching" MetaMask to sign Cosmos transactions.
+
+---
+
+# Developer Requirement Document: MetaMask Integration for BlockBoard
+
+**Target:** Enable MetaMask (via Snaps) as a first-class citizen alongside Keplr.
+
+## 1. Core Objectives
+
+* **Dual-Wallet Support:** Users can choose between MetaMask (Snap) and Keplr.
+* **Zero Chain Changes:** No modifications to the `wasmd` Docker setup or the Rust smart contract.
+* **Identity Mapping:** Implement a "Visual 0x" layer where users can see an Ethereum-formatted address that maps to their native bech32 address.
+
+---
+
+## 2. Technical Architecture
+
+The system will use a **Multi-Wallet Adapter** pattern. Instead of calling `window.keplr` directly, the frontend will interact with a unified `WalletManager`.
+
+### Dependencies to Add
+
+```bash
+npm install @cosmos-kit/react @cosmos-kit/leap-metamask-cosmos-snap @cosmos-kit/keplr @cosmjs/encoding
+
+```
+
+---
+
+## 3. Implementation Spec
+
+### A. Unified Wallet Signer (`cosmwasm.js`)
+
+The developer must refactor `cosmwasm.js` to utilize `CosmosKit`. This library provides a single `getSigningCosmWasmClient` method that abstracts whether the underlying signer is Keplr or the MetaMask Snap.
+
+**Requirements:**
+
+1. **Chain Definition:** Define `localwasm` in a `Chain` object (matching the Docker configuration: `stake` denom, `118` coin type).
+2. **Provider Integration:** Wrap the app in `ChainProvider` and register both wallet adapters:
+  - `@cosmos-kit/keplr`
+  - `@cosmos-kit/leap-metamask-cosmos-snap`
+3. **Dynamic Connection:** The "Connect" button must now trigger a modal allowing the user to select their preferred wallet.
+
+### B. The "Visual 0x" Mapping
+
+To fulfill the requirement of showing a `0x...` address while the backend uses `wasm1...`, implement a utility function:
+
+```javascript
+import { fromBech32, toHex } from "@cosmjs/encoding";
+
+/**
+ * Converts a Cosmos Bech32 address to an Ethereum-style Hex address
+ * for UI display purposes only.
+ */
+export const toDisplayAddress = (cosmosAddress) => {
+  try {
+    const { data } = fromBech32(cosmosAddress);
+    return "0x" + toHex(data);
+  } catch (err) {
+    return cosmosAddress; // Fallback to raw address if error
+  }
+};
+```
+
+Optional refinement (not required): apply EIP-55 checksum formatting to the display `0x...` address.
+
+---
+
+## 4. Error Handling & Logging
+
+### Implementation Strategy:
+
+* **Connection Errors:** If MetaMask does not support Snaps (e.g., outdated version), the system must catch the RPC error and suggest a browser update or switching to the Keplr backup.
+* **Transaction Rejection:** Use a standardized `try/catch` block around the `client.execute` call.
+* **User Cancel:** Log as "User rejected signature" (no error toast).
+* **Chain Error:** Log the full ABCI error code from `wasmd` and show a user-friendly toast (e.g., "Message too long").
+
+
+* **Debug Logs:** Maintain a `LOG_LEVEL` environment variable.
+  - Practical note: when using CosmosKit's `getSigningCosmWasmClient()`, the raw `SignDoc` is not exposed directly.
+  - Instead, log safe summaries (wallet name, address, msg, fee, txhash, rawLog) and enable console audit logging in debug builds.
+
+---
+
+## 5. Developer Checklist (Validation)
+
+| Feature | Requirement |
+| --- | --- |
+| **Persistence** | Reloading the page should remember if the user used MetaMask or Keplr. |
+| **Address Sync** | The 0x address shown must mathematically derive from the same key as the `wasm1` address. |
+| **Gas Handling** | The Snap must correctly display the fee in `stake` tokens inside the MetaMask popup. |
+| **Contract Interaction** | `PostMessage` must function identically regardless of the wallet used. |
+
+---
+
+## 6. Project Flow Summary
+
+1. **User Choice:** Select MetaMask or Keplr.
+2. **Address Discovery:** If MetaMask, install/connect Snap -> derive `wasm1` -> display as `0x`.
+3. **Action:** User clicks "Post Message".
+4. **Signing:** `CosmosKit` routes the request to the correct extension.
+5. **Broadcast:** The signed transaction is sent to `http://localhost:26657`.
+6. **Response:** The UI updates with the new message and count.
+
+**Would you like me to generate the specific `Chain` and `AssetList` configuration files required for your `localwasm` setup to work with these libraries?**
